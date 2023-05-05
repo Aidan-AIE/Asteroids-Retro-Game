@@ -23,6 +23,7 @@
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
+#include "raymath.h"
 #include "raygui.h"
 
 Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
@@ -44,6 +45,23 @@ Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
 
 }
 
+//changes a number towards a target gradually, made independent of framerate
+float changeGrad(float input, float desiredNumber, float amount) {
+    
+    input = Lerp(input, desiredNumber, amount * GetFrameTime());
+    
+    //if (input > desiredNumber) {
+    //    input -= amount * GetFrameTime();
+    //    if (input < desiredNumber) input = desiredNumber;
+    //}
+    //else {
+    //    input += amount * GetFrameTime();
+    //    if (input > desiredNumber) input = desiredNumber;
+    //}
+
+    return input;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -54,13 +72,16 @@ int main(int argc, char* argv[])
 
     int fps = 0;
 
-    Vector2 playerPos = {screenWidth/2,screenHeight/2};
-    float rotate = 0; //rotation in degrees
+    Vector2 playerPos = {screenWidth/2,screenHeight/2}; //current position of the player
+    Vector2 playerMomentum = { 0,0 }; //current momentum of the player
+    float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
+    float speedX = 0; //Speed of player along X axis for testing
+    float speedY = 0; //Speed of player along Y axis for testing
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
-    SetTargetFPS(60);
+    SetTargetFPS(1000);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -70,16 +91,57 @@ int main(int argc, char* argv[])
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
+        
+
+        //for fps counter
         fps = (int)(1 / GetFrameTime());
         
 
+        //Gets the input for player rotation
         if (IsKeyDown(KEY_D)) {
-            rotate += 100 * GetFrameTime();
+            rotate += 200 * GetFrameTime();
         }
         if (IsKeyDown(KEY_A)) {
-            rotate -= 100 * GetFrameTime();
+            rotate -= 200 * GetFrameTime();
         }
+        //makes a new variable by converting rotation from degrees to radians
         rotateConv = rotate * DEG2RAD;
+
+        //temporary movement
+        /*if (IsKeyDown(KEY_W)) {
+            playerPos = {playerPos.x + (100 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), playerPos.y + (100 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
+        }
+        if (IsKeyDown(KEY_S)) {
+            playerPos = { playerPos.x - (100 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), playerPos.y - (100 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
+        }*/
+        
+        //adds momentum based on player direction
+        if (IsKeyDown(KEY_W)) {
+            playerMomentum = { playerMomentum.x + (500 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), 
+                playerMomentum.y + (500 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
+            playerMomentum = { Clamp(playerMomentum.x, -300, 300), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
+        }
+        else {
+            playerMomentum = { changeGrad(playerMomentum.x, 0, 0.5), changeGrad(playerMomentum.y, 0, 0.5) };//to do: gradually slow down speed 
+        }
+
+        //moves player using current momentum
+        playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
+
+        //checks if the player has gone past the left and right borders and moves them to the oposite side
+        if (playerPos.x > screenWidth) {
+            playerPos.x = 0;
+        }
+        else if (playerPos.x < 0) { 
+            playerPos.x = screenWidth; 
+        }
+        //checks if the player has gone on the top and bottom borders and moves them to the oposite side
+        if (playerPos.y > screenHeight) {
+            playerPos.y = 0;
+        }
+        else if (playerPos.y < 0) {
+            playerPos.y = screenHeight;
+        }
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -92,8 +154,8 @@ int main(int argc, char* argv[])
         //DrawText(TextFormat("ROTATE CONV: %i", rotateConv), 10, 42, 16, RED);
 
         DrawTriangleLines(rotatePoint(playerPos, (double)rotateConv, {0, -20}),
-            rotatePoint(playerPos, (double)rotateConv, { 10, 0 }),
-            rotatePoint(playerPos, (double)rotateConv, { -10, 0 }), RAYWHITE);
+            rotatePoint(playerPos, (double)rotateConv, { 10, 10 }),
+            rotatePoint(playerPos, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
 
         EndDrawing();
