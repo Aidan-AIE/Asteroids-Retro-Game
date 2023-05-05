@@ -25,6 +25,7 @@
 #define RAYGUI_SUPPORT_ICONS
 #include "raymath.h"
 #include "raygui.h"
+#include <iostream> //remove later
 
 Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
     offset = { origin.x + offset.x, origin.y + offset.y };
@@ -76,12 +77,13 @@ int main(int argc, char* argv[])
     Vector2 playerMomentum = { 0,0 }; //current momentum of the player
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
+    
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
-    SetTargetFPS(1000);
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -116,13 +118,18 @@ int main(int argc, char* argv[])
         }*/
         
         //adds momentum based on player direction
-        if (IsKeyDown(KEY_W)) {
+        /*if (IsKeyDown(KEY_W)) {
             playerMomentum = { playerMomentum.x + (500 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), 
                 playerMomentum.y + (500 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
             playerMomentum = { Clamp(playerMomentum.x, -300, 300), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
+        }*/
+        if (IsKeyDown(KEY_W)) {
+            playerMomentum = { Lerp(playerMomentum.x , 500 * (float)cos(rotateConv - 1.5708), 1 * GetFrameTime()),
+                Lerp(playerMomentum.y , 500 * (float)sin(rotateConv - 1.5708), 1 * GetFrameTime()) };
+            playerMomentum = { Clamp(playerMomentum.x, -400, 400), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
         }
         else {
-            playerMomentum = { changeGrad(playerMomentum.x, 0, 0.5), changeGrad(playerMomentum.y, 0, 0.5) };//to do: gradually slow down speed 
+            playerMomentum = { changeGrad(playerMomentum.x, 0, 0.5), changeGrad(playerMomentum.y, 0, 0.75) };//to do: gradually slow down speed 
         }
 
         //moves player using current momentum
@@ -150,6 +157,8 @@ int main(int argc, char* argv[])
         ClearBackground(BLACK);
 
         DrawText(TextFormat("FPS: %i", fps), 10, 10, 16, RED);
+        DrawText(TextFormat("SPEED X: %a", abs((int)(playerPos.x - speedX))), 10, 26, 16, RED);
+        DrawText(TextFormat("SPEED Y: %a", abs((int)(playerPos.y - speedY))), 10, 42, 16, RED);
         //DrawText(TextFormat("ROTATE: %e", rotate), 10, 26, 16, RED);
         //DrawText(TextFormat("ROTATE CONV: %i", rotateConv), 10, 42, 16, RED);
 
@@ -160,6 +169,9 @@ int main(int argc, char* argv[])
 
         EndDrawing();
         //----------------------------------------------------------------------------------
+        speedX = playerPos.x;
+        speedY = playerPos.y;
+
     }
 
     // De-Initialization
