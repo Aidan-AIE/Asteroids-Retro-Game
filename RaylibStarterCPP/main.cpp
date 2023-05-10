@@ -26,6 +26,15 @@
 #include "raymath.h"
 #include "raygui.h"
 #include <iostream> //remove later
+#include <list>
+
+//struct Bullet
+//{
+//    float PosX;//x position of bullet
+//    float PosY;//y position of bullet
+//    float Angle;// angle bullet is facing
+//    float Time;// how long bullet has before expiring
+//};
 
 Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
     offset = { origin.x + offset.x, origin.y + offset.y };
@@ -63,6 +72,11 @@ float changeGrad(float input, float desiredNumber, float amount) {
     return input;
 }
 
+/*void moveBullet(Bullet& bullet) {
+    bullet.PosX += 500 * (float)cos(bullet.Angle - 1.5708);
+    std::cout << bullet.PosX << "\n";
+    bullet.PosY += 500 * (float)sin(bullet.Angle - 1.5708);
+}*/
 
 int main(int argc, char* argv[])
 {
@@ -78,6 +92,9 @@ int main(int argc, char* argv[])
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
     
+    //std::list <Bullet> bullets; //= { {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} };
+    std::list <float*> bullets; //list for all of the bullets to be held
+
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
 
@@ -100,10 +117,10 @@ int main(int argc, char* argv[])
         
 
         //Gets the input for player rotation
-        if (IsKeyDown(KEY_D)) {
+        if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
             rotate += 200 * GetFrameTime();
         }
-        if (IsKeyDown(KEY_A)) {
+        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
             rotate -= 200 * GetFrameTime();
         }
         //makes a new variable by converting rotation from degrees to radians
@@ -123,17 +140,38 @@ int main(int argc, char* argv[])
                 playerMomentum.y + (500 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
             playerMomentum = { Clamp(playerMomentum.x, -300, 300), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
         }*/
-        if (IsKeyDown(KEY_W)) {
+        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
             playerMomentum = { Lerp(playerMomentum.x , 500 * (float)cos(rotateConv - 1.5708), 1 * GetFrameTime()),
                 Lerp(playerMomentum.y , 500 * (float)sin(rotateConv - 1.5708), 1 * GetFrameTime()) };
             playerMomentum = { Clamp(playerMomentum.x, -400, 400), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
         }
         else {
-            playerMomentum = { changeGrad(playerMomentum.x, 0, 0.5), changeGrad(playerMomentum.y, 0, 0.75) };//to do: gradually slow down speed 
+            playerMomentum = { changeGrad(playerMomentum.x, 0, 0.5), changeGrad(playerMomentum.y, 0, 0.75) };//gradually lowers the speed of the player
+        }
+
+        //player shoot
+        if (IsKeyPressed(KEY_SPACE)) {
+            //Bullet place = {playerPos.x, playerPos.y, rotateConv, 10};
+            //bullets.push_back(place);
+
+            float sus [4] = { playerPos.x, playerPos.y, rotateConv, 10 };
+
+            bullets.push_back(sus);
         }
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
+
+        int bulletCount = 0;
+
+        //bullet move
+        for (float* bullet : bullets)
+        {
+            bullet[0 + (bulletCount * 4)] += 500 * (float)cos(bullet[2 + (bulletCount * 4)] - 1.5708) * GetFrameTime();
+            std::cout << bullet[0] << "\n";
+            bullet[1 + (bulletCount * 4)] += 500 * (float)sin(bullet[2 + (bulletCount)] - 1.5708) * GetFrameTime();
+            bulletCount++;
+        }
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side
         if (playerPos.x > screenWidth) {
@@ -157,14 +195,31 @@ int main(int argc, char* argv[])
         ClearBackground(BLACK);
 
         DrawText(TextFormat("FPS: %i", fps), 10, 10, 16, RED);
-        DrawText(TextFormat("SPEED X: %a", abs((int)(playerPos.x - speedX))), 10, 26, 16, RED);
-        DrawText(TextFormat("SPEED Y: %a", abs((int)(playerPos.y - speedY))), 10, 42, 16, RED);
-        //DrawText(TextFormat("ROTATE: %e", rotate), 10, 26, 16, RED);
-        //DrawText(TextFormat("ROTATE CONV: %i", rotateConv), 10, 42, 16, RED);
-
+        //Draws the player
         DrawTriangleLines(rotatePoint(playerPos, (double)rotateConv, {0, -20}),
             rotatePoint(playerPos, (double)rotateConv, { 10, 10 }),
             rotatePoint(playerPos, (double)rotateConv, { -10, 10 }), RAYWHITE);
+        //Just makes moving between screens smoother, doesn't provide anything useful (perhaps implement this into a function for further use)
+        DrawTriangleLines(rotatePoint({playerPos.x + screenWidth, playerPos.y}, (double)rotateConv, {0, -20}),
+            rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, {10, 10 }),
+            rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+
+        DrawTriangleLines(rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { 0, -20 }),
+            rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { 10, 10 }),
+            rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+
+        DrawTriangleLines(rotatePoint({ playerPos.x, playerPos.y + screenHeight}, (double)rotateConv, { 0, -20 }),
+            rotatePoint({ playerPos.x, playerPos.y + screenHeight}, (double)rotateConv, { 10, 10 }),
+            rotatePoint({ playerPos.x, playerPos.y + screenHeight}, (double)rotateConv, { -10, 10 }), RAYWHITE);
+
+        DrawTriangleLines(rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 0, -20 }),
+            rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 10, 10 }),
+            rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+
+        for (float* bullet : bullets)
+        {
+            DrawPixel( bullet[0], bullet[1], RAYWHITE);
+        }
 
 
         EndDrawing();
