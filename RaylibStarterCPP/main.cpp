@@ -110,28 +110,15 @@ int main(int argc, char* argv[])
         }
         //makes a new variable by converting rotation from degrees to radians
         rotateConv = rotate * DEG2RAD;
-
-        //temporary movement
-        /*if (IsKeyDown(KEY_W)) {
-            playerPos = {playerPos.x + (100 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), playerPos.y + (100 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
-        }
-        if (IsKeyDown(KEY_S)) {
-            playerPos = { playerPos.x - (100 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), playerPos.y - (100 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
-        }*/
         
         //adds momentum based on player direction
-        /*if (IsKeyDown(KEY_W)) {
-            playerMomentum = { playerMomentum.x + (500 * GetFrameTime() * (float)cos(rotateConv - 1.5708)), 
-                playerMomentum.y + (500 * GetFrameTime() * (float)sin(rotateConv - 1.5708)) };
-            playerMomentum = { Clamp(playerMomentum.x, -300, 300), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
-        }*/
         if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
             playerMomentum = { Lerp(playerMomentum.x , 500 * (float)cos(rotateConv - 1.5708), 1 * GetFrameTime()),
                 Lerp(playerMomentum.y , 500 * (float)sin(rotateConv - 1.5708), 1 * GetFrameTime()) };
             playerMomentum = { Clamp(playerMomentum.x, -400, 400), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
         }
         else {
-            playerMomentum = { changeGrad(playerMomentum.x, 0, 0.5), changeGrad(playerMomentum.y, 0, 0.75) };//gradually lowers the speed of the player
+            playerMomentum = { changeGrad(playerMomentum.x, 0, 1), changeGrad(playerMomentum.y, 0, 1) };//gradually lowers the speed of the player
         }
 
         //player shoot
@@ -145,10 +132,10 @@ int main(int argc, char* argv[])
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
-        //goes through all bullets and then moves them accordingly || TODO: inherit player velocity
+        //goes through all bullets and then moves them accordingly
         for (int i = 0; i < bullets.size(); i++) {
             //sets up a variable for the change in the x position based on speed and direction
-            float positionX = bullets[i].PosX + (500 * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime());
+            float positionX = bullets[i].PosX + ((500 + abs(bullets[i].momentX)) * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
             if (positionX > screenWidth) {
                 positionX = 0;
@@ -157,7 +144,7 @@ int main(int argc, char* argv[])
                 positionX = screenWidth;
             }
             //sets up a variable for the change in the y position based on speed and direction
-            float positionY = bullets[i].PosY + (500 * (float)sin(bullets[i].Angle - 1.5708) * GetFrameTime());
+            float positionY = bullets[i].PosY + ((500 + abs(bullets[i].momentX)) * (float)sin(bullets[i].Angle - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
             if (positionY > screenHeight) {
                 positionY = 0;
@@ -166,7 +153,7 @@ int main(int argc, char* argv[])
                 positionY = screenHeight;
             }
             //sets up the replacement for the bullet that uses the changed x and y values
-            Bullet replacement = { positionX, positionY, bullets[i].Angle, bullets[i].Time - (1 * GetFrameTime())};
+            Bullet replacement = { positionX, positionY, bullets[i].Angle, bullets[i].Time - (1 * GetFrameTime()), bullets[i].momentX, bullets[i].momentY};
             //inserts the new bullet behind the old one
             bullets.insert(bullets.begin() + i, replacement);
             //removes the old bullet (which is now one position ahead) functionally replacing it
