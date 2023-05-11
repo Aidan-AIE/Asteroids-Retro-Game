@@ -28,13 +28,13 @@
 #include <iostream> //remove later
 #include <list>
 
-//struct Bullet
-//{
-//    float PosX;//x position of bullet
-//    float PosY;//y position of bullet
-//    float Angle;// angle bullet is facing
-//    float Time;// how long bullet has before expiring
-//};
+struct Bullet
+{
+    float PosX;//x position of bullet
+    float PosY;//y position of bullet
+    float Angle;// angle bullet is facing
+    float Time;// how long bullet has before expiring
+};
 
 Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
     offset = { origin.x + offset.x, origin.y + offset.y };
@@ -77,8 +77,7 @@ int main(int argc, char* argv[])
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
     
-
-
+    std::list <Bullet> bullets;
 
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
@@ -137,6 +136,9 @@ int main(int argc, char* argv[])
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
             
+            Bullet newBullet = { playerPos.x,playerPos.y, rotateConv, 0 };
+            bullets.push_back(newBullet);
+
         }
 
         //moves player using current momentum
@@ -186,6 +188,11 @@ int main(int argc, char* argv[])
             rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 10, 10 }),
             rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
+
+        for (Bullet bullet : bullets)
+        {
+            DrawCircle(bullet.PosX, bullet.PosY, 2, RAYWHITE);
+        }
 
 
         EndDrawing();
