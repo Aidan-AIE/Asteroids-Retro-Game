@@ -26,7 +26,8 @@
 #include "raymath.h"
 #include "raygui.h"
 #include <iostream> //remove later
-#include <list>
+#include <vector>
+
 
 struct Bullet
 {
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
     
-    std::list <Bullet> bullets;
+    std::vector<Bullet> bullets;
 
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
@@ -136,10 +137,11 @@ int main(int argc, char* argv[])
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
             
-            Bullet newBullet = { playerPos.x,playerPos.y, rotateConv, 0 };
+            Bullet newBullet = { playerPos.x,playerPos.y, rotateConv, 2 };
             bullets.push_back(newBullet);
 
         }
+
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
@@ -189,11 +191,9 @@ int main(int argc, char* argv[])
             rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
 
-        for (Bullet bullet : bullets)
-        {
+        for (Bullet bullet : bullets) {
             DrawCircle(bullet.PosX, bullet.PosY, 2, RAYWHITE);
         }
-
 
         EndDrawing();
         //----------------------------------------------------------------------------------
