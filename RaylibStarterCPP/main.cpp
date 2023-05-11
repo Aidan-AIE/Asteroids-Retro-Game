@@ -142,9 +142,16 @@ int main(int argc, char* argv[])
 
         }
 
-
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
+
+        for (int i = 0; i < bullets.size(); i++) {
+            
+            Bullet replacement = { bullets[i].PosX + (500 * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime()), 
+                bullets[i].PosY + (500 * (float)sin(bullets[i].Angle - 1.5708) * GetFrameTime()), bullets[i].Angle, bullets[i].Time};
+            bullets.insert(bullets.begin() + i, replacement);
+            bullets.erase(bullets.begin() + i + 1);
+        }
 
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side

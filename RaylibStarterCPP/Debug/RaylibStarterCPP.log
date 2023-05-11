@@ -127,8 +127,9 @@ C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(76,37)
 C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(76,37): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(76,52): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
 C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(76,52): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(155,27): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(148,27): warning C4018: '<': signed/unsigned mismatch
 C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(162,27): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(195,43): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(195,30): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(169,27): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(202,43): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\s220969\Documents\Asteroids-Retro-Game\RaylibStarterCPP\main.cpp(202,30): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   RaylibStarterCPP.vcxproj -> C:\Users\s220969\Documents\Asteroids-Retro-Game\bin\Win32\Debug\RaylibStarterCPP.exe
