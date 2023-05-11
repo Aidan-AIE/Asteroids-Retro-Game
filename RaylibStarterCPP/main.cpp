@@ -60,23 +60,8 @@ float changeGrad(float input, float desiredNumber, float amount) {
     
     input = Lerp(input, desiredNumber, amount * GetFrameTime());
     
-    //if (input > desiredNumber) {
-    //    input -= amount * GetFrameTime();
-    //    if (input < desiredNumber) input = desiredNumber;
-    //}
-    //else {
-    //    input += amount * GetFrameTime();
-    //    if (input > desiredNumber) input = desiredNumber;
-    //}
-
     return input;
 }
-
-/*void moveBullet(Bullet& bullet) {
-    bullet.PosX += 500 * (float)cos(bullet.Angle - 1.5708);
-    std::cout << bullet.PosX << "\n";
-    bullet.PosY += 500 * (float)sin(bullet.Angle - 1.5708);
-}*/
 
 int main(int argc, char* argv[])
 {
@@ -92,8 +77,8 @@ int main(int argc, char* argv[])
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
     
-    //std::list <Bullet> bullets; //= { {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} };
-    std::list <float*> bullets; //list for all of the bullets to be held
+
+
 
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
@@ -151,27 +136,12 @@ int main(int argc, char* argv[])
 
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
-            //Bullet place = {playerPos.x, playerPos.y, rotateConv, 10};
-            //bullets.push_back(place);
-
-            float sus [4] = { playerPos.x, playerPos.y, rotateConv, 10 };
-
-            bullets.push_back(sus);
+            
         }
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
 
-        int bulletCount = 0;
-
-        //bullet move
-        for (float* bullet : bullets)
-        {
-            bullet[0 + (bulletCount * 4)] += 500 * (float)cos(bullet[2 + (bulletCount * 4)] - 1.5708) * GetFrameTime();
-            std::cout << bullet[0] << "\n";
-            bullet[1 + (bulletCount * 4)] += 500 * (float)sin(bullet[2 + (bulletCount)] - 1.5708) * GetFrameTime();
-            bulletCount++;
-        }
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side
         if (playerPos.x > screenWidth) {
@@ -216,10 +186,6 @@ int main(int argc, char* argv[])
             rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 10, 10 }),
             rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
-        for (float* bullet : bullets)
-        {
-            DrawPixel( bullet[0], bullet[1], RAYWHITE);
-        }
 
 
         EndDrawing();
