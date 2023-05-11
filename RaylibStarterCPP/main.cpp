@@ -35,6 +35,8 @@ struct Bullet
     float PosY;//y position of bullet
     float Angle;// angle bullet is facing
     float Time;// how long bullet has before expiring
+    float momentX; //extra momentum provided by the player on x
+    float momentY; //extra momentum provided by the player on y
 };
 
 Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
@@ -56,9 +58,10 @@ Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
 
 }
 
-//changes a number towards a target gradually, made independent of framerate
-float changeGrad(float input, float desiredNumber, float amount) {
-    
+
+float changeGrad(float input, float desiredNumber, float amount) { // changes a number towards a target gradually, made independent of framerate
+                                                                   // this was originally a different equation but I figured out that lerp works and dont want to change
+                                                                   // everything else
     input = Lerp(input, desiredNumber, amount * GetFrameTime());
     
     return input;
@@ -95,12 +98,9 @@ int main(int argc, char* argv[])
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
-        
-
         //for fps counter
         fps = (int)(1 / GetFrameTime());
         
-
         //Gets the input for player rotation
         if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
             rotate += 200 * GetFrameTime();
@@ -136,23 +136,48 @@ int main(int argc, char* argv[])
 
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
-            
-            Bullet newBullet = { playerPos.x,playerPos.y, rotateConv, 2 };
-            bullets.push_back(newBullet);
+            //creates a bullet at the location and rotation of the player
+            Vector2 spawn = rotatePoint(playerPos, rotateConv, { 0,-20 });
+            Bullet newBullet = {spawn.x, spawn.y, rotateConv, 1, playerMomentum.x, playerMomentum.y };
+            bullets.push_back(newBullet); //adds the bullet to the bullet list
 
         }
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
-
+        //goes through all bullets and then moves them accordingly || TODO: inherit player velocity
         for (int i = 0; i < bullets.size(); i++) {
-            
-            Bullet replacement = { bullets[i].PosX + (500 * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime()), 
-                bullets[i].PosY + (500 * (float)sin(bullets[i].Angle - 1.5708) * GetFrameTime()), bullets[i].Angle, bullets[i].Time};
+            //sets up a variable for the change in the x position based on speed and direction
+            float positionX = bullets[i].PosX + (500 * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime());
+            //if the bullet is off the screen it will correct accordingly
+            if (positionX > screenWidth) {
+                positionX = 0;
+            }
+            else if (positionX < 0) {
+                positionX = screenWidth;
+            }
+            //sets up a variable for the change in the y position based on speed and direction
+            float positionY = bullets[i].PosY + (500 * (float)sin(bullets[i].Angle - 1.5708) * GetFrameTime());
+            //if the bullet is off the screen it will correct accordingly
+            if (positionY > screenHeight) {
+                positionY = 0;
+            }
+            else if (positionY < 0) {
+                positionY = screenHeight;
+            }
+            //sets up the replacement for the bullet that uses the changed x and y values
+            Bullet replacement = { positionX, positionY, bullets[i].Angle, bullets[i].Time - (1 * GetFrameTime())};
+            //inserts the new bullet behind the old one
             bullets.insert(bullets.begin() + i, replacement);
+            //removes the old bullet (which is now one position ahead) functionally replacing it
             bullets.erase(bullets.begin() + i + 1);
         }
-
+        //deletes bullets that have expired
+        for (int i = 0; i < bullets.size(); i++) {
+            if (bullets[i].Time < 0) {
+                bullets.erase(bullets.begin() + i);
+            }
+        }
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side
         if (playerPos.x > screenWidth) {
@@ -199,7 +224,7 @@ int main(int argc, char* argv[])
 
 
         for (Bullet bullet : bullets) {
-            DrawCircle(bullet.PosX, bullet.PosY, 2, RAYWHITE);
+            DrawCircle(bullet.PosX, bullet.PosY, 1, RAYWHITE);
         }
 
         EndDrawing();
