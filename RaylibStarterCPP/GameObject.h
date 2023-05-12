@@ -1,7 +1,7 @@
 #pragma once
 
 class GameObject {
-public:
+protected:
 	float posX;
 	float posY;
 
