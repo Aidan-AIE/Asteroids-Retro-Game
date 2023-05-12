@@ -214,6 +214,8 @@ int main(int argc, char* argv[])
             DrawCircle(bullet.PosX, bullet.PosY, 1, RAYWHITE);
         }
 
+        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
         speedX = playerPos.x;
