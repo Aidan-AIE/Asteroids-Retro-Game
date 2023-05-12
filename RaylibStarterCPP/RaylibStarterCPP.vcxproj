@@ -168,10 +168,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="SceneObject.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SceneObject.h" />
+    <ClInclude Include="GameObject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
