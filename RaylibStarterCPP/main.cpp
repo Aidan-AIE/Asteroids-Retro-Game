@@ -25,6 +25,8 @@
 #define RAYGUI_SUPPORT_ICONS
 #include "raymath.h"
 #include "raygui.h"
+#include "GameObject.h"
+#include "Bullet.h"
 #include <iostream> //remove later
 #include <vector>
 
@@ -81,8 +83,8 @@ int main(int argc, char* argv[])
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
     
-    //std::vector<Bullet> bullets;
-
+    GameObject bulletHolder;
+    
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
 
@@ -123,17 +125,13 @@ int main(int argc, char* argv[])
 
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
-            //creates a bullet at the location and rotation of the player
-            /*Vector2 spawn = rotatePoint(playerPos, rotateConv, { 0,-20 });
-            Bullet newBullet = {spawn.x, spawn.y, rotateConv, 1, playerMomentum.x, playerMomentum.y };
-            bullets.push_back(newBullet); //adds the bullet to the bullet list*/
 
         }
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
         //goes through all bullets and then moves them accordingly
-        /*for (int i = 0; i < bullets.size(); i++) {
+        /*for (Bullet bullet : (Bullet)bulletHolder.children) {
             //sets up a variable for the change in the x position based on speed and direction
             float positionX = bullets[i].PosX + ((500 + abs(bullets[i].momentX)) * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
