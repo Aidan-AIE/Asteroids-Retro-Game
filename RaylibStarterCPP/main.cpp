@@ -129,16 +129,16 @@ int main(int argc, char* argv[])
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
             BulletObject newBullet;
-            newBullet.Initialize(playerPos, rotateConv, 1);
+            newBullet.Initialize(rotatePoint(playerPos, rotateConv, {0,-15}), rotateConv, 1);
             bulletHolder.push_back(newBullet);
         }
 
         //moves player using current momentum
         playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
-        //goes through all bullets and then moves them accordingly
-        /*for (Bullet bullet : (Bullet)bulletHolder.children) {
+        //goes through all bullets and then moves them accordingly || TODO: MAKE BULLETS SHOOT ACCORDING TO VELOCITY
+        for (BulletObject &bullet : bulletHolder) {
             //sets up a variable for the change in the x position based on speed and direction
-            float positionX = bullets[i].PosX + ((500 + abs(bullets[i].momentX)) * (float)cos(bullets[i].Angle - 1.5708) * GetFrameTime());
+            float positionX = bullet.xPos() + ((500) * (float)cos(bullet.angle() - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
             if (positionX > screenWidth) {
                 positionX = 0;
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
                 positionX = screenWidth;
             }
             //sets up a variable for the change in the y position based on speed and direction
-            float positionY = bullets[i].PosY + ((500 + abs(bullets[i].momentX)) * (float)sin(bullets[i].Angle - 1.5708) * GetFrameTime());
+            float positionY = bullet.yPos() + ((500) * (float)sin(bullet.angle() - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
             if (positionY > screenHeight) {
                 positionY = 0;
@@ -155,19 +155,20 @@ int main(int argc, char* argv[])
             else if (positionY < 0) {
                 positionY = screenHeight;
             }
-            //sets up the replacement for the bullet that uses the changed x and y values
-            Bullet replacement = { positionX, positionY, bullets[i].Angle, bullets[i].Time - (1 * GetFrameTime()), bullets[i].momentX, bullets[i].momentY};
-            //inserts the new bullet behind the old one
-            bullets.insert(bullets.begin() + i, replacement);
-            //removes the old bullet (which is now one position ahead) functionally replacing it
-            bullets.erase(bullets.begin() + i + 1);
+            
+            bullet.ChangePos({ positionX, positionY });
+
+            bullet.SubTime(1);
+
         }
         //deletes bullets that have expired
-        for (int i = 0; i < bullets.size(); i++) {
-            if (bullets[i].Time < 0) {
-                bullets.erase(bullets.begin() + i);
+        int bulletno = 0;
+        for (BulletObject &bullet : bulletHolder) {
+            if (bullet.time() < 0) {
+                bulletHolder.erase(bulletHolder.begin() + bulletno);
             }
-        }*/
+            bulletno += 1;
+        }
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side
         if (playerPos.x > screenWidth) {

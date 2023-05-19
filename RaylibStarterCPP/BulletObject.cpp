@@ -13,6 +13,14 @@ float BulletObject::yPos() {
 	return position.y;
 }
 
+float BulletObject::angle() {
+	return Angle;
+}
+
+float BulletObject::time() {
+	return Time;
+}
+
 void BulletObject::Draw() {
 	DrawCircle(position.x, position.y, 1, RAYWHITE);
 }
@@ -21,6 +29,10 @@ void BulletObject::Initialize(Vector2 pos, float angle, float time) {
 	position = pos;
 	Angle = angle;
 	Time = time;
+}
+
+void BulletObject::SubTime(float time){
+	Time -= time * GetFrameTime();
 }
 
 void BulletObject::Move() {
