@@ -25,8 +25,9 @@
 #define RAYGUI_SUPPORT_ICONS
 #include "raymath.h"
 #include "raygui.h"
-#include "GameObject.h"
-#include "Bullet.h"
+#include "GameObject.h"//remove later
+#include "Bullet.h"//remove later
+#include "BulletObject.h"
 #include <iostream> //remove later
 #include <vector>
 
@@ -83,7 +84,9 @@ int main(int argc, char* argv[])
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
     
-    GameObject bulletHolder;
+    //GameObject bulletHolder;
+
+    std::vector<BulletObject> bulletHolder;
     
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
@@ -125,7 +128,9 @@ int main(int argc, char* argv[])
 
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
-
+            BulletObject newBullet;
+            newBullet.Initialize(playerPos, rotateConv, 1);
+            bulletHolder.push_back(newBullet);
         }
 
         //moves player using current momentum
@@ -208,9 +213,9 @@ int main(int argc, char* argv[])
             rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
 
-        /*for (Bullet bullet : bullets) {
-            DrawCircle(bullet.PosX, bullet.PosY, 1, RAYWHITE);
-        }*/
+        for (BulletObject bullet : bulletHolder) {
+            bullet.Draw();
+        }
 
         
 
