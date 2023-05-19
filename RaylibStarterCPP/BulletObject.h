@@ -12,8 +12,9 @@ public:
 	float yPos();
 	float angle();
 	float time();
+	Vector2 momentum();
 
-	void Initialize(Vector2 pos, float angle, float time);
+	void Initialize(Vector2 pos, float angle, float time, Vector2 mom);
 	
 	void Move();
 	void SubTime(float time);
@@ -21,6 +22,7 @@ public:
 
 protected:
 	Vector2 position;
+	Vector2 Momentum;
 	float Angle;
 	float Time;
 };

@@ -25,8 +25,6 @@
 #define RAYGUI_SUPPORT_ICONS
 #include "raymath.h"
 #include "raygui.h"
-#include "GameObject.h"//remove later
-#include "Bullet.h"//remove later
 #include "BulletObject.h"
 #include <iostream> //remove later
 #include <vector>
@@ -129,7 +127,7 @@ int main(int argc, char* argv[])
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
             BulletObject newBullet;
-            newBullet.Initialize(rotatePoint(playerPos, rotateConv, {0,-15}), rotateConv, 1);
+            newBullet.Initialize(rotatePoint(playerPos, rotateConv, {0,-15}), rotateConv, 1, playerMomentum);
             bulletHolder.push_back(newBullet);
         }
 
@@ -138,7 +136,7 @@ int main(int argc, char* argv[])
         //goes through all bullets and then moves them accordingly || TODO: MAKE BULLETS SHOOT ACCORDING TO VELOCITY
         for (BulletObject &bullet : bulletHolder) {
             //sets up a variable for the change in the x position based on speed and direction
-            float positionX = bullet.xPos() + ((500) * (float)cos(bullet.angle() - 1.5708) * GetFrameTime());
+            float positionX = bullet.xPos() + ((500 + abs(bullet.momentum().x)) * (float)cos(bullet.angle() - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
             if (positionX > screenWidth) {
                 positionX = 0;
@@ -147,7 +145,7 @@ int main(int argc, char* argv[])
                 positionX = screenWidth;
             }
             //sets up a variable for the change in the y position based on speed and direction
-            float positionY = bullet.yPos() + ((500) * (float)sin(bullet.angle() - 1.5708) * GetFrameTime());
+            float positionY = bullet.yPos() + ((500 + abs(bullet.momentum().y)) * (float)sin(bullet.angle() - 1.5708) * GetFrameTime());
             //if the bullet is off the screen it will correct accordingly
             if (positionY > screenHeight) {
                 positionY = 0;

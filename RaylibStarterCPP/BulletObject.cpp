@@ -21,14 +21,19 @@ float BulletObject::time() {
 	return Time;
 }
 
+Vector2 BulletObject::momentum() {
+	return Momentum;
+}
+
 void BulletObject::Draw() {
 	DrawCircle(position.x, position.y, 1, RAYWHITE);
 }
 
-void BulletObject::Initialize(Vector2 pos, float angle, float time) {
+void BulletObject::Initialize(Vector2 pos, float angle, float time, Vector2 mom) {
 	position = pos;
 	Angle = angle;
 	Time = time;
+	Momentum = mom;
 }
 
 void BulletObject::SubTime(float time){
