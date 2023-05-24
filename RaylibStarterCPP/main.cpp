@@ -26,6 +26,7 @@
 #include "raymath.h"
 #include "raygui.h"
 #include "BulletObject.h"
+#include "AsteroidObject.h"
 #include <iostream> //remove later
 #include <vector>
 
@@ -59,7 +60,6 @@ Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
 
 }
 
-
 float changeGrad(float input, float desiredNumber, float amount) { // changes a number towards a target gradually, made independent of framerate
                                                                    // this was originally a different equation but I figured out that lerp works and dont want to change
                                                                    // everything else
@@ -81,18 +81,24 @@ int main(int argc, char* argv[])
     Vector2 playerMomentum = { 0,0 }; //current momentum of the player
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
-    
-    //GameObject bulletHolder;
 
-    std::vector<BulletObject> bulletHolder;
+    std::vector<BulletObject> bulletHolder; //holds all current bullets
+    std::vector<AsteroidObject> asteroidHolder; //holds all current asteroids
     
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
+
+    bool hitboxes = true; //used to display hitboxes for display purposes
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
+    AsteroidObject gamer;
+    gamer.Initialize({500,50},1,20,2);
+
+    asteroidHolder.push_back(gamer);
+
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -111,6 +117,12 @@ int main(int argc, char* argv[])
         if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
             rotate -= 200 * GetFrameTime();
         }
+
+        //debug purposes
+        if (IsKeyPressed(KEY_H)) {
+            hitboxes = !hitboxes;
+        }
+
         //makes a new variable by converting rotation from degrees to radians
         rotateConv = rotate * DEG2RAD;
         
@@ -167,6 +179,35 @@ int main(int argc, char* argv[])
             }
             bulletno += 1;
         }
+        //moves the asteroids in the game
+        for (AsteroidObject& asteroid : asteroidHolder) {
+            //sets up a variable for the change in the x position based on speed and direction
+            float positionX = asteroid.xPos() + asteroid.speed() * (float)cos(asteroid.angle() - 1.5708) * GetFrameTime();
+            //if the bullet is off the screen it will correct accordingly
+            if (positionX > screenWidth) {
+                positionX = 0;
+            }
+            else if (positionX < 0) {
+                positionX = screenWidth;
+            }
+            //sets up a variable for the change in the y position based on speed and direction
+            float positionY = asteroid.yPos() + asteroid.speed() * (float)sin(asteroid.angle() - 1.5708) * GetFrameTime();
+            //if the bullet is off the screen it will correct accordingly
+            if (positionY > screenHeight) {
+                positionY = 0;
+            }
+            else if (positionY < 0) {
+                positionY = screenHeight;
+            }
+
+            asteroid.ChangePos({ positionX, positionY });
+
+            /*for (BulletObject& bullet : bulletHolder) {
+                CheckCollisionCircles()
+            }*/
+
+        }
+
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side
         if (playerPos.x > screenWidth) {
@@ -215,8 +256,28 @@ int main(int argc, char* argv[])
         for (BulletObject bullet : bulletHolder) {
             bullet.Draw();
         }
+        for (AsteroidObject asteroid : asteroidHolder) {
+            asteroid.Draw();
+        }
 
-        
+
+        //DrawPolyLines({ (float)screenWidth / 2, (float)screenHeight / 2 }, 10, 10, 0, RAYWHITE);
+
+        if (hitboxes) {
+            DrawCircleV(playerPos, 10, Fade(RED, 0.5)); //could save some lines by making this a function
+            DrawCircleLines(playerPos.x, playerPos.y, 10, RED);
+
+            for (BulletObject bullet : bulletHolder) {
+                DrawCircle(bullet.xPos(), bullet.yPos(), 5, Fade(RED, 0.5));
+                DrawCircleLines(bullet.xPos(), bullet.yPos(), 5, RED);
+            }
+
+            for (AsteroidObject asteroid : asteroidHolder) {
+                DrawCircle(asteroid.xPos(), asteroid.yPos(), asteroid.size(), Fade(RED, 0.5));
+                DrawCircleLines(asteroid.xPos(), asteroid.yPos(), asteroid.size(), RED);
+            }
+
+        }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
