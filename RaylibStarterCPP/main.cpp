@@ -94,8 +94,8 @@ int main(int argc, char* argv[])
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
-    AsteroidObject gamer;
-    gamer.Initialize({500,50},1,20,2);
+    AsteroidObject gamer;//delete later
+    gamer.Initialize({500,50}, 0, GetRandomValue(20, 40), 2);
 
     asteroidHolder.push_back(gamer);
 
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
         for (AsteroidObject& asteroid : asteroidHolder) {
             //sets up a variable for the change in the x position based on speed and direction
             float positionX = asteroid.xPos() + asteroid.speed() * (float)cos(asteroid.angle() - 1.5708) * GetFrameTime();
-            //if the bullet is off the screen it will correct accordingly
+            //if the asteroid is off the screen it will correct accordingly
             if (positionX > screenWidth) {
                 positionX = 0;
             }
@@ -192,19 +192,32 @@ int main(int argc, char* argv[])
             }
             //sets up a variable for the change in the y position based on speed and direction
             float positionY = asteroid.yPos() + asteroid.speed() * (float)sin(asteroid.angle() - 1.5708) * GetFrameTime();
-            //if the bullet is off the screen it will correct accordingly
+            //if the asteroid is off the screen it will correct accordingly
             if (positionY > screenHeight) {
                 positionY = 0;
             }
             else if (positionY < 0) {
                 positionY = screenHeight;
             }
-
+            //moves the asteroid after all calculations are finished
             asteroid.ChangePos({ positionX, positionY });
-
-            /*for (BulletObject& bullet : bulletHolder) {
-                CheckCollisionCircles()
-            }*/
+            //this section handles collisions with bullets
+            int count = 0;
+            for (BulletObject& bullet : bulletHolder) {
+                
+                if (CheckCollisionCircles({ asteroid.xPos(), asteroid.yPos() }, asteroid.size(), { bullet.xPos(), bullet.yPos() }, 5)) {
+                    bulletHolder.erase(bulletHolder.begin() + count);
+                    
+                    asteroid.Break();
+                    asteroid.Initialize({ asteroid.xPos(), asteroid.yPos() }, GetRandomValue(-6, 6),asteroid.generateSpeed(),asteroid.sizeI());
+                    
+                    AsteroidObject clone;
+                    clone.Initialize({ asteroid.xPos(), asteroid.yPos() }, GetRandomValue(-6, 6), asteroid.generateSpeed(), asteroid.sizeI());
+                    
+                    asteroidHolder.push_back(clone);
+                }
+                count++;
+            }
 
         }
 

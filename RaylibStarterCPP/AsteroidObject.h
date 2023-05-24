@@ -13,7 +13,9 @@ public:
 	float yPos();
 	float speed();
 	float angle();
-	int size();
+	float generateSpeed();
+	int size();//returns pixel size
+	int sizeI();//returns the regular int
 
 protected:
 	Vector2 position;
