@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
         //player shoot
         if (IsKeyPressed(KEY_SPACE)) {
             BulletObject newBullet;
-            newBullet.Initialize(rotatePoint(playerPos, rotateConv, {0,-15}), rotateConv, 1, playerMomentum);
+             newBullet.Initialize(rotatePoint(playerPos, rotateConv, {0,-15}), rotateConv, 1, playerMomentum);
             bulletHolder.push_back(newBullet);
         }
 
@@ -180,6 +180,7 @@ int main(int argc, char* argv[])
             bulletno += 1;
         }
         //moves the asteroids in the game
+        int asteroidCount = 0;
         for (AsteroidObject& asteroid : asteroidHolder) {
             //sets up a variable for the change in the x position based on speed and direction
             float positionX = asteroid.xPos() + asteroid.speed() * (float)cos(asteroid.angle() - 1.5708) * GetFrameTime();
@@ -209,6 +210,12 @@ int main(int argc, char* argv[])
                     bulletHolder.erase(bulletHolder.begin() + count);
                     
                     asteroid.Break();
+
+                    if (asteroid.sizeI() == -1) {
+                        asteroidHolder.erase(asteroidHolder.begin() + asteroidCount);
+                        continue;
+                    }
+
                     asteroid.Initialize({ asteroid.xPos(), asteroid.yPos() }, GetRandomValue(-6, 6),asteroid.generateSpeed(),asteroid.sizeI());
                     
                     AsteroidObject clone;
@@ -218,7 +225,7 @@ int main(int argc, char* argv[])
                 }
                 count++;
             }
-
+            asteroidCount++;
         }
 
 
