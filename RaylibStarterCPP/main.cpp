@@ -117,10 +117,33 @@ int main(int argc, char* argv[])
         //----------------------------------------------------------------------------------
 
         if (asteroidHolder.size() == 0) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 10; i++) {
+
                 float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+                int side = GetRandomValue(0, 3);
+
+                Vector2 spawnpoint = { 0,0 };
+
+                switch (side) {
+                case 0:
+                    spawnpoint = { (float)GetRandomValue(0,screenWidth), 0 };
+                    break;
+                case 1:
+                    spawnpoint = { (float)GetRandomValue(0.0f,screenWidth), (float)screenHeight };
+                    break;
+                case 2:
+                    spawnpoint = { 0,  (float)GetRandomValue(0,screenHeight) };
+                    break;
+                case 3:
+                    spawnpoint = { (float)screenWidth, (float)GetRandomValue(0, screenHeight) };
+                default:
+                    spawnpoint = { (float)GetRandomValue(0,screenWidth), 0 };
+                    break;
+                }
+
                 AsteroidObject newAsteroid;
-                newAsteroid.Initialize({ (float)GetRandomValue(0,screenWidth), (float)GetRandomValue(0,screenHeight)}, r * (PI * 2), 2, 2);
+                newAsteroid.Initialize(spawnpoint, r * (PI * 2), newAsteroid.generateSpeed(), 2);
                 asteroidHolder.push_back(newAsteroid);
 
             }
@@ -337,7 +360,6 @@ int main(int argc, char* argv[])
             }
 
         }
-
         
         EndScissorMode();
         EndMode2D();

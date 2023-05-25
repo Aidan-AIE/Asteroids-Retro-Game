@@ -71,7 +71,7 @@ float AsteroidObject::generateSpeed() {
 		return GetRandomValue(30, 50);
 		break;
 	default:
-		return 0;
+		return GetRandomValue(30, 50);
 	}
 }
 
