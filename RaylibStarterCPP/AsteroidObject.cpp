@@ -1,15 +1,27 @@
 #include "AsteroidObject.h"
 
-void AsteroidObject::Draw() {
+void AsteroidObject::Draw(int screenWidth, int screenHeight) {
 	switch (Size) {
 	case 0: //small
 		DrawPolyLines( position, 8, 10, 0, RAYWHITE);
+		DrawPolyLines({ position.x - screenWidth, position.y }, 8, 10, 0, RAYWHITE);
+		DrawPolyLines({ position.x + screenWidth, position.y }, 8, 10, 0, RAYWHITE);
+		DrawPolyLines({ position.x, position.y - screenHeight }, 8, 10, 0, RAYWHITE);
+		DrawPolyLines({ position.x, position.y + screenHeight }, 8, 10, 0, RAYWHITE);
 		break;
 	case 1: //medium
 		DrawPolyLines(position, 8, 20, 0, RAYWHITE);
+		DrawPolyLines({ position.x - screenWidth, position.y }, 8, 20, 0, RAYWHITE);
+		DrawPolyLines({ position.x + screenWidth, position.y }, 8, 20, 0, RAYWHITE);
+		DrawPolyLines({ position.x, position.y - screenHeight }, 8, 20, 0, RAYWHITE);
+		DrawPolyLines({ position.x, position.y + screenHeight }, 8, 20, 0, RAYWHITE);
 		break;
 	case 2: //big
 		DrawPolyLines(position, 10, 35, 0, RAYWHITE);
+		DrawPolyLines({ position.x - screenWidth, position.y }, 10, 35, 0, RAYWHITE);
+		DrawPolyLines({ position.x + screenWidth, position.y }, 10, 35, 0, RAYWHITE);
+		DrawPolyLines({ position.x, position.y - screenHeight }, 10, 35, 0, RAYWHITE);
+		DrawPolyLines({ position.x, position.y + screenHeight }, 10, 35, 0, RAYWHITE);
 		break;
 	default:
 		break;

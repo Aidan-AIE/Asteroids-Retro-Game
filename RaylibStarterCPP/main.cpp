@@ -72,8 +72,8 @@ int main(int argc, char* argv[])
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    int screenWidth = 1080; //the play area for x coordinates
+    int screenHeight = 1080;//the play area for y coordinates
 
     int score = 0;
 
@@ -87,12 +87,21 @@ int main(int argc, char* argv[])
     std::vector<BulletObject> bulletHolder; //holds all current bullets
     std::vector<AsteroidObject> asteroidHolder; //holds all current asteroids
     
-    float speedX = 0; //Speed of player along X axis for testing
-    float speedY = 0; //Speed of player along Y axis for testing
 
     bool hitboxes = true; //used to display hitboxes for debug purposes
     
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(1920, 1080, "raylib [core] example - basic window");
+
+    SetWindowMinSize(screenWidth, screenHeight);
+    
+    ToggleFullscreen();
+
+    Camera2D camera = { 0 };
+
+    camera.target = { 0,0 };
+    camera.offset = { 1920/5, 0};
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
 
     Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, NULL, 0);
 
@@ -113,6 +122,7 @@ int main(int argc, char* argv[])
                 AsteroidObject newAsteroid;
                 newAsteroid.Initialize({ (float)GetRandomValue(0,screenWidth), (float)GetRandomValue(0,screenHeight)}, r * (PI * 2), 2, 2);
                 asteroidHolder.push_back(newAsteroid);
+
             }
         }
         
@@ -269,11 +279,16 @@ int main(int argc, char* argv[])
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
+        
+        
 
+        BeginDrawing();
+                
         ClearBackground(BLACK);
 
-        //DrawText(TextFormat("%i", score), 10, 10, 30, RAYWHITE);
+        BeginMode2D(camera);
+
+        BeginScissorMode(1920 / 5.0f, 0, screenWidth, screenHeight);
 
         DrawTextEx(fontTtf, TextFormat("%i", score), { 10.0f, 5.0f }, 35, 5, RAYWHITE);
         
@@ -304,7 +319,7 @@ int main(int argc, char* argv[])
             bullet.Draw();
         }
         for (AsteroidObject asteroid : asteroidHolder) {
-            asteroid.Draw();
+            asteroid.Draw(screenWidth, screenHeight);
         }
 
         if (hitboxes) {
@@ -323,11 +338,12 @@ int main(int argc, char* argv[])
 
         }
 
+        
+        EndScissorMode();
+        EndMode2D();
         EndDrawing();
-        //----------------------------------------------------------------------------------
-        speedX = playerPos.x;
-        speedY = playerPos.y;
 
+        //----------------------------------------------------------------------------------
     }
 
     // De-Initialization

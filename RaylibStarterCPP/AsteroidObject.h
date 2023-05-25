@@ -5,7 +5,7 @@ class AsteroidObject {
 public:	
 	void ChangePos(Vector2 newPos);
 	
-	void Draw();
+	void Draw(int screenWidth, int screenHeight);
 	void Break();
 	void Initialize( Vector2 pos, float angle, float speed, int size);
 
