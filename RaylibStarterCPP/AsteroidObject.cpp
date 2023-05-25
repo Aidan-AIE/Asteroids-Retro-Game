@@ -50,10 +50,10 @@ float AsteroidObject::angle() {
 float AsteroidObject::generateSpeed() {
 	switch (Size) {
 	case 0:
-		return GetRandomValue(100, 150);
+		return GetRandomValue(70, 250);
 		break;
 	case 1:
-		return GetRandomValue(50, 90);
+		return GetRandomValue(50, 100);
 		break;
 	case 2:
 		return GetRandomValue(30, 50);

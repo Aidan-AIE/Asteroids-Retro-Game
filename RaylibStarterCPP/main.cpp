@@ -75,6 +75,8 @@ int main(int argc, char* argv[])
     int screenWidth = 800;
     int screenHeight = 450;
 
+    int score = 0;
+
     int fps = 0;
 
     Vector2 playerPos = {screenWidth/2,screenHeight/2}; //current position of the player
@@ -88,16 +90,14 @@ int main(int argc, char* argv[])
     float speedX = 0; //Speed of player along X axis for testing
     float speedY = 0; //Speed of player along Y axis for testing
 
-    bool hitboxes = true; //used to display hitboxes for display purposes
-
+    bool hitboxes = true; //used to display hitboxes for debug purposes
+    
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+
+    Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, NULL, 0);
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
-    AsteroidObject gamer;//delete later
-    gamer.Initialize({500,50}, 0, GetRandomValue(20, 40), 2);
-
-    asteroidHolder.push_back(gamer);
 
 
     // Main game loop
@@ -107,8 +107,14 @@ int main(int argc, char* argv[])
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
-        //for fps counter
-        fps = (int)(1 / GetFrameTime());
+        if (asteroidHolder.size() == 0) {
+            for (int i = 0; i < 3; i++) {
+                float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                AsteroidObject newAsteroid;
+                newAsteroid.Initialize({ (float)GetRandomValue(0,screenWidth), (float)GetRandomValue(0,screenHeight)}, r * (PI * 2), 2, 2);
+                asteroidHolder.push_back(newAsteroid);
+            }
+        }
         
         //Gets the input for player rotation
         if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
@@ -205,23 +211,40 @@ int main(int argc, char* argv[])
             //this section handles collisions with bullets
             int count = 0;
             for (BulletObject& bullet : bulletHolder) {
-                
                 if (CheckCollisionCircles({ asteroid.xPos(), asteroid.yPos() }, asteroid.size(), { bullet.xPos(), bullet.yPos() }, 5)) {
                     bulletHolder.erase(bulletHolder.begin() + count);
-                    
-                    asteroid.Break();
 
+                    switch (asteroid.sizeI()) {
+                    case 0:
+                        score += 100;
+                        break;
+                    case 1:
+                        score += 50;
+                        break;
+                    case 2:
+                        score += 20;
+                        break;
+                    }
+
+                    //decreases size by 1
+                    asteroid.Break();
+                    //if on smallest size, destroys asteroid and finishes current iteration
                     if (asteroid.sizeI() == -1) {
                         asteroidHolder.erase(asteroidHolder.begin() + asteroidCount);
                         continue;
                     }
-
-                    asteroid.Initialize({ asteroid.xPos(), asteroid.yPos() }, GetRandomValue(-6, 6),asteroid.generateSpeed(),asteroid.sizeI());
+                    //generates random number between 0.0 and 1.0
+                    float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    //changes the values of the asteroid to new random ones
+                    asteroid.Initialize({ asteroid.xPos(), asteroid.yPos() }, r * (PI*2),asteroid.generateSpeed(),asteroid.sizeI());
                     
+                    r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    //creates a clone which undergoes the same process
                     AsteroidObject clone;
-                    clone.Initialize({ asteroid.xPos(), asteroid.yPos() }, GetRandomValue(-6, 6), asteroid.generateSpeed(), asteroid.sizeI());
-                    
+                    clone.Initialize({ asteroid.xPos(), asteroid.yPos() }, r* (PI * 2), asteroid.generateSpeed(), asteroid.sizeI());
+                    //adds the clone to the asteroid holder
                     asteroidHolder.push_back(clone);
+
                 }
                 count++;
             }
@@ -250,7 +273,11 @@ int main(int argc, char* argv[])
 
         ClearBackground(BLACK);
 
-        DrawText(TextFormat("FPS: %i", fps), 10, 10, 16, RED);
+        //DrawText(TextFormat("%i", score), 10, 10, 30, RAYWHITE);
+
+        DrawTextEx(fontTtf, TextFormat("%i", score), { 10.0f, 5.0f }, 35, 5, RAYWHITE);
+        
+                
         //Draws the player
         DrawTriangleLines(rotatePoint(playerPos, (double)rotateConv, {0, -20}),
             rotatePoint(playerPos, (double)rotateConv, { 10, 10 }),
@@ -279,9 +306,6 @@ int main(int argc, char* argv[])
         for (AsteroidObject asteroid : asteroidHolder) {
             asteroid.Draw();
         }
-
-
-        //DrawPolyLines({ (float)screenWidth / 2, (float)screenHeight / 2 }, 10, 10, 0, RAYWHITE);
 
         if (hitboxes) {
             DrawCircleV(playerPos, 10, Fade(RED, 0.5)); //could save some lines by making this a function
