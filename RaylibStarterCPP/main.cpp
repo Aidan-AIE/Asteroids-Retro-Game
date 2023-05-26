@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     std::vector<BulletObject> bulletHolder; //holds all current bullets
     std::vector<AsteroidObject> asteroidHolder; //holds all current asteroids
     
-    bool hitboxes = true; //used to display hitboxes for debug purposes
+    bool hitboxes = false; //used to display hitboxes for debug purposes
     
     InitWindow(1920, 1080, "raylib [core] example - basic window");
 
