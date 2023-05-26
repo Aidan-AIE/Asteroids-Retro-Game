@@ -68,8 +68,12 @@ int main(int argc, char* argv[])
     int score = 0;//amount of points player has
     int lives = 3;//amount of remaining lives player has
     bool isAlive = true;//if the player is alive
-    float deathCount = 0;
-    bool gameOver = false;
+    float deathCount = 0;//countdown for player respawning
+    int difficulty = 3;
+    bool gameOver = false;//if the player has expired all of their lives
+    bool canSpawn = true; //if it is safe for the player to respawn
+
+    float spawnTime = 5; // time before asteroids respawn
 
     int fps = 0;
 
@@ -111,35 +115,45 @@ int main(int argc, char* argv[])
 
         //spawns the asteroids
         if (asteroidHolder.size() == 0) {
-            for (int i = 0; i < 10; i++) {
+            
+            if (spawnTime <= 0) {
+                for (int i = 0; i < difficulty; i++) {
+                    //creates a random number from 0.0 - 1.0
+                    float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    //decideds what side 
+                    int side = GetRandomValue(0, 1);
 
-                float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    Vector2 spawnpoint = { 0,0 };
 
-                int side = GetRandomValue(0, 3);
+                    switch (side) {
+                    case 0:
+                        spawnpoint = { (float)GetRandomValue(0.0f,screenWidth), 0 }; 
+                        while (CheckCollisionCircles(playerPos, 10, spawnpoint, 35)) { //prevent spawning on player
+                            spawnpoint = { (float)GetRandomValue(0.0f,screenWidth), 0 };
+                        }
+                        break;
+                    case 1:
+                        spawnpoint = { 0, (float)GetRandomValue(0.0f,screenHeight) };
+                        while (CheckCollisionCircles(playerPos, 10, spawnpoint, 35)) {
+                            spawnpoint = { 0, (float)GetRandomValue(0.0f,screenHeight) };
+                        }
+                        break;
+                    default:
+                        spawnpoint = { (float)GetRandomValue(0,screenWidth), 0 };
+                        break;
+                    }
 
-                Vector2 spawnpoint = { 0,0 };
+                    AsteroidObject newAsteroid;
+                    newAsteroid.Initialize(spawnpoint, r * (PI * 2), newAsteroid.generateSpeed(), 2);
+                    asteroidHolder.push_back(newAsteroid);
 
-                switch (side) {
-                case 0:
-                    spawnpoint = { (float)GetRandomValue(0,screenWidth), 0 };
-                    break;
-                case 1:
-                    spawnpoint = { (float)GetRandomValue(0.0f,screenWidth), (float)screenHeight };
-                    break;
-                case 2:
-                    spawnpoint = { 0,  (float)GetRandomValue(0,screenHeight) };
-                    break;
-                case 3:
-                    spawnpoint = { (float)screenWidth, (float)GetRandomValue(0, screenHeight) };
-                default:
-                    spawnpoint = { (float)GetRandomValue(0,screenWidth), 0 };
-                    break;
                 }
-
-                AsteroidObject newAsteroid;
-                newAsteroid.Initialize(spawnpoint, r * (PI * 2), newAsteroid.generateSpeed(), 2);
-                asteroidHolder.push_back(newAsteroid);
-
+                difficulty++;
+                spawnTime = 5;
+            }
+            else
+            {
+                spawnTime -= 1 * GetFrameTime();
             }
         }
         
@@ -181,14 +195,24 @@ int main(int argc, char* argv[])
             //moves player using current momentum
             playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
         }
-        else {
+        else if(!gameOver) {
+            //if the player is dead decrease the countdown
             deathCount -= 1.0f * GetFrameTime();
-            if (deathCount <= 0) {
-                isAlive = true;
+            //checks if it is safe for the player to spawn
+            canSpawn = true;
+            for (AsteroidObject asteroid : asteroidHolder) {
+                if (CheckCollisionCircles({ 0,0 }, 60, { asteroid.xPos(),asteroid.yPos() }, asteroid.size())) {
+                    canSpawn = false;
+                    break;
+                }
+            }
+            //if the coundown is 0 and it is safe to do so, respawn player
+            if (deathCount <= 0 && canSpawn) {
                 playerPos = { screenWidth / 2.0f, screenHeight / 2.0f };
                 playerMomentum = { 0, 0 };
                 rotate = 0;
                 deathCount = 0;
+                isAlive = true;
             }
         }
 
@@ -332,7 +356,13 @@ int main(int argc, char* argv[])
 
         BeginScissorMode(1920 / 5.0f, 0, screenWidth, screenHeight);
 
-        DrawTextEx(fontTtf, TextFormat("%i", score), { 10.0f, 5.0f }, 35, 5, RAYWHITE);
+        if (!gameOver) {
+            DrawTextEx(fontTtf, TextFormat("%i", score), { 10.0f, 5.0f }, 35, 5, RAYWHITE);
+        }
+        else {
+            DrawTextEx(fontTtf, "Game over", {screenWidth / 2.0f - 80, screenHeight / 2.0f - 50}, 60, 5, RAYWHITE);
+            DrawTextEx(fontTtf, TextFormat("%i", score), { screenWidth / 2.0f, screenHeight / 2.0f }, 50, 5, RAYWHITE);
+        }
         
         if (isAlive) {
             //Draws the player
