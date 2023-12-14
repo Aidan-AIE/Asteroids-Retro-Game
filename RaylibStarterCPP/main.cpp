@@ -26,19 +26,10 @@
 #include "raymath.h"
 #include "raygui.h"
 #include "BulletObject.h"
+#include "AsteroidObject.h"
 #include <iostream> //remove later
 #include <vector>
 
-
-/*struct Bullet
-{
-    float PosX;//x position of bullet
-    float PosY;//y position of bullet
-    float Angle;// angle bullet is facing
-    float Time;// how long bullet has before expiring
-    float momentX; //extra momentum provided by the player on x
-    float momentY; //extra momentum provided by the player on y
-};*/
 
 Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
     offset = { origin.x + offset.x, origin.y + offset.y };
@@ -59,7 +50,6 @@ Vector2 rotatePoint(Vector2 origin, double radians, Vector2 offset) {
 
 }
 
-
 float changeGrad(float input, float desiredNumber, float amount) { // changes a number towards a target gradually, made independent of framerate
                                                                    // this was originally a different equation but I figured out that lerp works and dont want to change
                                                                    // everything else
@@ -72,8 +62,18 @@ int main(int argc, char* argv[])
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    int screenWidth = 1080; //the play area for x coordinates
+    int screenHeight = 1080;//the play area for y coordinates
+
+    int score = 0;//amount of points player has
+    int lives = 3;//amount of remaining lives player has
+    bool isAlive = true;//if the player is alive
+    float deathCount = 0;//countdown for player respawning
+    int difficulty = 3;
+    bool gameOver = false;//if the player has expired all of their lives
+    bool canSpawn = true; //if it is safe for the player to respawn
+
+    float spawnTime = 5; // time before asteroids respawn
 
     int fps = 0;
 
@@ -81,18 +81,30 @@ int main(int argc, char* argv[])
     Vector2 playerMomentum = { 0,0 }; //current momentum of the player
     float rotate = 0; //current rotation of player in degrees
     float rotateConv = 0; //converted rotation from degrees to radians
-    
-    //GameObject bulletHolder;
 
-    std::vector<BulletObject> bulletHolder;
+    std::vector<BulletObject> bulletHolder; //holds all current bullets
+    std::vector<AsteroidObject> asteroidHolder; //holds all current asteroids
     
-    float speedX = 0; //Speed of player along X axis for testing
-    float speedY = 0; //Speed of player along Y axis for testing
+    bool hitboxes = false; //used to display hitboxes for debug purposes
+    
+    InitWindow(1920, 1080, "raylib [core] example - basic window");
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    SetWindowMinSize(screenWidth, screenHeight);
+    
+    ToggleFullscreen();
+
+    Camera2D camera = { 0 };
+
+    camera.target = { 0,0 };
+    camera.offset = { 1920/5, 0};
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
+
+    Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, NULL, 0);
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
+
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -101,38 +113,109 @@ int main(int argc, char* argv[])
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
-        //for fps counter
-        fps = (int)(1 / GetFrameTime());
+        //spawns the asteroids
+        if (asteroidHolder.size() == 0) {
+            
+            if (spawnTime <= 0) {
+                for (int i = 0; i < difficulty; i++) {
+                    //creates a random number from 0.0 - 1.0
+                    float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    //decideds what side 
+                    int side = GetRandomValue(0, 1);
+
+                    Vector2 spawnpoint = { 0,0 };
+
+                    switch (side) {
+                    case 0:
+                        spawnpoint = { (float)GetRandomValue(0.0f,screenWidth), 0 }; 
+                        while (CheckCollisionCircles(playerPos, 10, spawnpoint, 35)) { //prevent spawning on player
+                            spawnpoint = { (float)GetRandomValue(0.0f,screenWidth), 0 };
+                        }
+                        break;
+                    case 1:
+                        spawnpoint = { 0, (float)GetRandomValue(0.0f,screenHeight) };
+                        while (CheckCollisionCircles(playerPos, 10, spawnpoint, 35)) {
+                            spawnpoint = { 0, (float)GetRandomValue(0.0f,screenHeight) };
+                        }
+                        break;
+                    default:
+                        spawnpoint = { (float)GetRandomValue(0,screenWidth), 0 };
+                        break;
+                    }
+
+                    AsteroidObject newAsteroid;
+                    newAsteroid.Initialize(spawnpoint, r * (PI * 2), newAsteroid.generateSpeed(), 2);
+                    asteroidHolder.push_back(newAsteroid);
+
+                }
+                difficulty++;
+                spawnTime = 5;
+            }
+            else
+            {
+                spawnTime -= 1 * GetFrameTime();
+            }
+        }
         
-        //Gets the input for player rotation
-        if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
-            rotate += 200 * GetFrameTime();
+        //debug purposes
+        if (IsKeyPressed(KEY_H)) {
+            hitboxes = !hitboxes;
         }
-        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
-            rotate -= 200 * GetFrameTime();
-        }
+
         //makes a new variable by converting rotation from degrees to radians
         rotateConv = rotate * DEG2RAD;
-        
-        //adds momentum based on player direction
-        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
-            playerMomentum = { Lerp(playerMomentum.x , 500 * (float)cos(rotateConv - 1.5708), 1 * GetFrameTime()),
-                Lerp(playerMomentum.y , 500 * (float)sin(rotateConv - 1.5708), 1 * GetFrameTime()) };
-            playerMomentum = { Clamp(playerMomentum.x, -400, 400), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
+        //stops movement if the player is dead
+        if (isAlive) {
+
+            //Gets the input for player rotation
+            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+                rotate += 200 * GetFrameTime();
+            }
+            if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+                rotate -= 200 * GetFrameTime();
+            }
+
+            //adds momentum based on player direction
+            if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
+                playerMomentum = { Lerp(playerMomentum.x , 500 * (float)cos(rotateConv - 1.5708), 1 * GetFrameTime()),
+                    Lerp(playerMomentum.y , 500 * (float)sin(rotateConv - 1.5708), 1 * GetFrameTime()) };
+                playerMomentum = { Clamp(playerMomentum.x, -400, 400), Clamp(playerMomentum.y, -400, 400) };//clamps the player to a max speed
+            }
+            else {
+                playerMomentum = { changeGrad(playerMomentum.x, 0, 1), changeGrad(playerMomentum.y, 0, 1) };//gradually lowers the speed of the player
+            }
+
+            //player shoot
+            if (IsKeyPressed(KEY_SPACE)) {
+                BulletObject newBullet;
+                newBullet.Initialize(rotatePoint(playerPos, rotateConv, { 0,-15 }), rotateConv, 1, playerMomentum);
+                bulletHolder.push_back(newBullet);
+            }
+
+            //moves player using current momentum
+            playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
         }
-        else {
-            playerMomentum = { changeGrad(playerMomentum.x, 0, 1), changeGrad(playerMomentum.y, 0, 1) };//gradually lowers the speed of the player
+        else if(!gameOver) {
+            //if the player is dead decrease the countdown
+            deathCount -= 1.0f * GetFrameTime();
+            //checks if it is safe for the player to spawn
+            canSpawn = true;
+            for (AsteroidObject asteroid : asteroidHolder) {
+                if (CheckCollisionCircles({ 0,0 }, 60, { asteroid.xPos(),asteroid.yPos() }, asteroid.size())) {
+                    canSpawn = false;
+                    break;
+                }
+            }
+            //if the coundown is 0 and it is safe to do so, respawn player
+            if (deathCount <= 0 && canSpawn) {
+                playerPos = { screenWidth / 2.0f, screenHeight / 2.0f };
+                playerMomentum = { 0, 0 };
+                rotate = 0;
+                deathCount = 0;
+                isAlive = true;
+            }
         }
 
-        //player shoot
-        if (IsKeyPressed(KEY_SPACE)) {
-            BulletObject newBullet;
-            newBullet.Initialize(rotatePoint(playerPos, rotateConv, {0,-15}), rotateConv, 1, playerMomentum);
-            bulletHolder.push_back(newBullet);
-        }
-
-        //moves player using current momentum
-        playerPos = { playerPos.x + (playerMomentum.x * GetFrameTime()), playerPos.y + (playerMomentum.y * GetFrameTime()) };
         //goes through all bullets and then moves them accordingly || TODO: MAKE BULLETS SHOOT ACCORDING TO VELOCITY
         for (BulletObject &bullet : bulletHolder) {
             //sets up a variable for the change in the x position based on speed and direction
@@ -167,6 +250,83 @@ int main(int argc, char* argv[])
             }
             bulletno += 1;
         }
+        //moves the asteroids in the game
+        int asteroidCount = 0;
+        for (AsteroidObject& asteroid : asteroidHolder) {
+            //sets up a variable for the change in the x position based on speed and direction
+            float positionX = asteroid.xPos() + asteroid.speed() * (float)cos(asteroid.angle() - 1.5708) * GetFrameTime();
+            //if the asteroid is off the screen it will correct accordingly
+            if (positionX > screenWidth) {
+                positionX = 0;
+            }
+            else if (positionX < 0) {
+                positionX = screenWidth;
+            }
+            //sets up a variable for the change in the y position based on speed and direction
+            float positionY = asteroid.yPos() + asteroid.speed() * (float)sin(asteroid.angle() - 1.5708) * GetFrameTime();
+            //if the asteroid is off the screen it will correct accordingly
+            if (positionY > screenHeight) {
+                positionY = 0;
+            }
+            else if (positionY < 0) {
+                positionY = screenHeight;
+            }
+            //moves the asteroid after all calculations are finished
+            asteroid.ChangePos({ positionX, positionY });
+            //this section handles collisions with bullets
+            int count = 0;
+            for (BulletObject& bullet : bulletHolder) {
+                if (CheckCollisionCircles({ asteroid.xPos(), asteroid.yPos() }, asteroid.size(), { bullet.xPos(), bullet.yPos() }, 5)) {
+                    bulletHolder.erase(bulletHolder.begin() + count);
+
+                    switch (asteroid.sizeI()) {
+                    case 0:
+                        score += 100;
+                        break;
+                    case 1:
+                        score += 50;
+                        break;
+                    case 2:
+                        score += 20;
+                        break;
+                    }
+
+                    //decreases size by 1
+                    asteroid.Break();
+                    //if on smallest size, destroys asteroid and finishes current iteration
+                    if (asteroid.sizeI() == -1) {
+                        asteroidHolder.erase(asteroidHolder.begin() + asteroidCount);
+                        continue;
+                    }
+                    //generates random number between 0.0 and 1.0
+                    float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    //changes the values of the asteroid to new random ones
+                    asteroid.Initialize({ asteroid.xPos(), asteroid.yPos() }, r * (PI*2),asteroid.generateSpeed(),asteroid.sizeI());
+                    
+                    r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                    //creates a clone which undergoes the same process
+                    AsteroidObject clone;
+                    clone.Initialize({ asteroid.xPos(), asteroid.yPos() }, r* (PI * 2), asteroid.generateSpeed(), asteroid.sizeI());
+                    //adds the clone to the asteroid holder
+                    asteroidHolder.push_back(clone);
+
+                }
+                count++;
+            }
+            //if colliding with player
+            if (CheckCollisionCircles({ asteroid.xPos(), asteroid.yPos() }, asteroid.size(), playerPos, 10) && isAlive) {
+                lives--;
+                isAlive = false;
+                deathCount = 3;
+
+                if (lives < 0) {
+                    gameOver = true;
+                }
+            }
+
+            asteroidCount++;
+        }
+
 
         //checks if the player has gone past the left and right borders and moves them to the oposite side
         if (playerPos.x > screenWidth) {
@@ -185,44 +345,88 @@ int main(int argc, char* argv[])
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
+        
+        
 
+        BeginDrawing();
+                
         ClearBackground(BLACK);
 
-        DrawText(TextFormat("FPS: %i", fps), 10, 10, 16, RED);
-        //Draws the player
-        DrawTriangleLines(rotatePoint(playerPos, (double)rotateConv, {0, -20}),
-            rotatePoint(playerPos, (double)rotateConv, { 10, 10 }),
-            rotatePoint(playerPos, (double)rotateConv, { -10, 10 }), RAYWHITE);
-        //Just makes moving between screens smoother, doesn't provide anything useful (perhaps implement this into a function for further use)
-        DrawTriangleLines(rotatePoint({playerPos.x + screenWidth, playerPos.y}, (double)rotateConv, {0, -20}),
-            rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, {10, 10 }),
-            rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+        BeginMode2D(camera);
 
-        DrawTriangleLines(rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { 0, -20 }),
-            rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { 10, 10 }),
-            rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+        BeginScissorMode(1920 / 5.0f, 0, screenWidth, screenHeight);
 
-        DrawTriangleLines(rotatePoint({ playerPos.x, playerPos.y + screenHeight}, (double)rotateConv, { 0, -20 }),
-            rotatePoint({ playerPos.x, playerPos.y + screenHeight}, (double)rotateConv, { 10, 10 }),
-            rotatePoint({ playerPos.x, playerPos.y + screenHeight}, (double)rotateConv, { -10, 10 }), RAYWHITE);
+        if (!gameOver) {
+            DrawTextEx(fontTtf, TextFormat("%i", score), { 10.0f, 5.0f }, 35, 5, RAYWHITE);
+        }
+        else {
+            DrawTextEx(fontTtf, "Game over", {screenWidth / 2.0f - 80, screenHeight / 2.0f - 50}, 60, 5, RAYWHITE);
+            DrawTextEx(fontTtf, TextFormat("%i", score), { screenWidth / 2.0f, screenHeight / 2.0f }, 50, 5, RAYWHITE);
+        }
+        
+        if (isAlive) {
+            //Draws the player
+            DrawTriangleLines(rotatePoint(playerPos, (double)rotateConv, { 0, -20 }),
+                rotatePoint(playerPos, (double)rotateConv, { 10, 10 }),
+                rotatePoint(playerPos, (double)rotateConv, { -10, 10 }), RAYWHITE);
+            //Just makes moving between screens smoother, doesn't provide anything useful (perhaps implement this into a function for further use)
+            DrawTriangleLines(rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, { 0, -20 }),
+                rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, { 10, 10 }),
+                rotatePoint({ playerPos.x + screenWidth, playerPos.y }, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
-        DrawTriangleLines(rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 0, -20 }),
-            rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 10, 10 }),
-            rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+            DrawTriangleLines(rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { 0, -20 }),
+                rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { 10, 10 }),
+                rotatePoint({ playerPos.x - screenWidth, playerPos.y }, (double)rotateConv, { -10, 10 }), RAYWHITE);
 
+            DrawTriangleLines(rotatePoint({ playerPos.x, playerPos.y + screenHeight }, (double)rotateConv, { 0, -20 }),
+                rotatePoint({ playerPos.x, playerPos.y + screenHeight }, (double)rotateConv, { 10, 10 }),
+                rotatePoint({ playerPos.x, playerPos.y + screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+
+            DrawTriangleLines(rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 0, -20 }),
+                rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { 10, 10 }),
+                rotatePoint({ playerPos.x, playerPos.y - screenHeight }, (double)rotateConv, { -10, 10 }), RAYWHITE);
+        }
+
+        switch (lives) {
+        case 3:
+            DrawTriangleLines({ 75,40 }, { 65,60 }, { 85,60 }, RAYWHITE);
+        case 2:
+            DrawTriangleLines({ 45,40 }, { 35,60 }, { 55,60 }, RAYWHITE);
+        case 1:
+            DrawTriangleLines({ 15,40 }, { 5,60 }, { 25,60 }, RAYWHITE);
+        default:
+            break;
+            
+        }
 
         for (BulletObject bullet : bulletHolder) {
             bullet.Draw();
         }
+        for (AsteroidObject asteroid : asteroidHolder) {
+            asteroid.Draw(screenWidth, screenHeight);
+        }
 
+        if (hitboxes) {
+            DrawCircleV(playerPos, 10, Fade(RED, 0.5)); //could save some lines by making this a function
+            DrawCircleLines(playerPos.x, playerPos.y, 10, RED);
+
+            for (BulletObject bullet : bulletHolder) {
+                DrawCircle(bullet.xPos(), bullet.yPos(), 5, Fade(RED, 0.5));
+                DrawCircleLines(bullet.xPos(), bullet.yPos(), 5, RED);
+            }
+
+            for (AsteroidObject asteroid : asteroidHolder) {
+                DrawCircle(asteroid.xPos(), asteroid.yPos(), asteroid.size(), Fade(RED, 0.5));
+                DrawCircleLines(asteroid.xPos(), asteroid.yPos(), asteroid.size(), RED);
+            }
+
+        }
         
-
+        EndScissorMode();
+        EndMode2D();
         EndDrawing();
-        //----------------------------------------------------------------------------------
-        speedX = playerPos.x;
-        speedY = playerPos.y;
 
+        //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
